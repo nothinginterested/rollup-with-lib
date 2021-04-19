@@ -6,17 +6,23 @@ export interface Target {
     [ReactiveFlags.IS_Reactive]?: boolean
 }
 
+export const isObject = (val: unknown): val is Record<any, any> =>
+    val !== null && typeof val === 'object';
+
+const handle = (target: any, key: any): any => {
+    if (key === ReactiveFlags.IS_Reactive) {
+        return true;
+    }
+    const res = Reflect.get(target, key);
+
+    if (isObject(res)) {
+        return reactive(res);
+    }
+
+    return target[key];
+};
 
 export function reactive(target: object) {
-    const handle = (target: any, key: any) => {
-        if (key === ReactiveFlags.IS_Reactive) {
-            return true;
-        }
-        const res=Reflect.get(target,key)
-
-
-        return target[key];
-    };
     return new Proxy(
         target,
         {
@@ -27,8 +33,6 @@ export function reactive(target: object) {
 }
 
 export function isReactive(value: unknown): boolean {
-    let tag = (value as Target)[ReactiveFlags.IS_Reactive];
-
     return !!(value && (value as Target)[ReactiveFlags.IS_Reactive] as boolean);
 
 }
